@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GUMBARAM - Premium v8.1</title>
+    
+    <link rel="apple-touch-icon" href="https://i.hizliresim.com/3wlhjf8.jpeg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GUMBARAM">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #0095f6;
+            --secondary-blue: #00f2fe;
+            --neon-blue: #00d2ff;
+            --danger-red: #ff3b30;
+            --success-green: #4cd964;
+            --gold: #ffd700;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --bg-gradient: radial-gradient(circle at top, #1a1a2e 0%, #0f0f1a 50%, #050505 100%);
+            --input-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient); color: white;
+            height: 100%; width: 100%;
+            overflow: hidden; 
+            touch-action: none; 
+            -webkit-tap-highlight-color: transparent;
+            padding-top: env(safe-area-inset-top);
+            overscroll-behavior: none;
+        }
+
+        body.modal-open { overflow: hidden; position: fixed; width: 100%; }
+
+        .app-container {
+            width: 100%; max-width: 450px; height: 100%;
+            margin: 0 auto; position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px; box-sizing: border-box;
+            overflow: hidden;
+            transition: filter 0.3s ease; 
+        }
+
+        .app-container.blur-active { filter: blur(15px) brightness(0.6); pointer-events: none; }
+
+        header { 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            z-index: 10; 
+            margin-bottom: 20px; 
+            padding: 0 5px;
+            box-sizing: border-box;
+        }
+        .menu-icon, .info-icon { font-size: 28px; cursor: pointer; padding: 10px; color: var(--secondary-blue); }
+
+        .circle-container {
+            width: 280px; height: 280px;
+            position: relative; margin-bottom: 15px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .outer-ring {
+            position: absolute; width: 100%; height: 100%;
+            border: 2px solid var(--glass-border); border-radius: 50%;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
+        }
+
+        .inner-circle {
+            position: relative; width: 260px; height: 260px;
+            background: rgba(0,0,0,0.3); border-radius: 50%;
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+            z-index: 2; border: 1px solid var(--glass-border);
+        }
+
+        .water-wrapper {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            transition: height 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            will-change: height;
+        }
+
+        .water {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);
+        }
+
+        .water::before, .water::after {
+            content: ""; position: absolute; width: 200%; height: 200%; top: -165%; left: -50%;
+            background: rgba(255, 255, 255, 0.3); border-radius: 40%;
+            animation: waveRotate 8s infinite linear;
+        }
+        .water::after { top: -160%; background: rgba(255, 255, 255, 0.15); border-radius: 35%; animation: waveRotate 12s infinite linear; }
+
+        @keyframes waveRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .percentage { position: relative; font-size: 60px; font-weight: 900; z-index: 10; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+
+        .motivation-text { font-size: 16px; margin-bottom: 30px; text-align: center; color: #b0b0b0; min-height: 24px; font-weight: 400; }
+        .target-remaining-box { font-size: 16px; color: #b0b0b0; font-weight: 400; margin-bottom: 20px; text-align: center; }
+
+        .lucky-box {
+            width: 85%; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px; padding: 25px; text-align: center; cursor: pointer; margin-bottom: 20px;
+            transition: border 0.2s ease;
+        }
+        .lucky-box:active, .action-btn:active, .styled-input:focus, .curr-btn:active, .mult-btn:active {
+            border: 0.8px solid rgba(255, 255, 255, 0.8) !important;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .lucky-result { font-size: 32px; font-weight: 800; color: var(--neon-blue); display: none; justify-content: center; overflow: hidden; height: 40px; }
+
+        .action-container { width: 85%; display: none; justify-content: space-between; margin-bottom: 10px; }
+        .action-btn { width: calc(50% - 10px); padding: 14px; border-radius: 12px; font-size: 13px; font-weight: 600; text-align: center; border: 1px solid var(--glass-border); cursor: pointer; transition: all 0.3s; }
+        .confirm { background: rgba(0, 149, 246, 0.3); border-color: var(--primary-blue); }
+        .new-roll { background: rgba(255, 255, 255, 0.05); }
+        .new-roll.no-rights { background: rgba(255, 59, 48, 0.3); border-color: var(--danger-red); color: white; }
+
+        .rights-box { width: 85%; padding: 12px 0; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; text-align: center; font-size: 12px; color: #ccc; display: none; backdrop-filter: blur(5px); }
+        .rights-box.active { display: block; }
+
+        #dynamic-motivation { width: 85%; margin-top: 15px; font-size: 14px; color: var(--gold); text-align: center; min-height: 20px; font-weight: 600; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); transition: opacity 0.5s; opacity: 0; }
+
+        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 90; backdrop-filter: blur(2px); }
+        
+        .drawer {
+            position: fixed; top: 0; left: -110%; width: 85%; height: 100%;
+            background: #0f0f1a; z-index: 100; transition: left 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            padding: 0 20px 20px 20px; box-sizing: border-box; display: flex; flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+        }
+        .drawer.active { left: 0 !important; }
+        .drawer-inner { padding-top: calc(20px + env(safe-area-inset-top)); height: 100%; overflow-y: auto; }
+        .drawer-header { font-size: 18px; font-weight: 800; margin-bottom: 15px; text-align: center; color: var(--secondary-blue); }
+
+        .input-group { margin-bottom: 15px; width: 100%; }
+        .input-label { font-size: 10px; color: #888; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
+
+        .styled-input, .curr-btn {
+            width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--glass-border);
+            border-radius: 10px; color: #fff; font-size: 13px; box-sizing: border-box; outline: none; transition: border 0.2s;
+        }
+        .currency-row, .period-row { display: flex; gap: 6px; margin-top: 4px; }
+        .curr-btn { cursor: pointer; text-align: center; font-weight: 700; flex: 1; padding: 8px; }
+        .curr-btn.active, .period-btn.active { background: var(--success-green) !important; border-color: var(--success-green); color: #000; }
+
+        .period-btn { 
+            flex: 1; padding: 8px; background: var(--input-bg); border: 1px solid var(--glass-border); 
+            border-radius: 10px; color: #fff; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; transition: 0.3s;
+        }
+
+        .save-btn { width: 100%; padding: 12px; background: var(--primary-blue); border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; margin-top: 8px; box-sizing: border-box; }
+        .notification-btn { width: 100%; padding: 12px; background: rgba(0, 149, 246, 0.1); border: 1px solid var(--primary-blue); border-radius: 10px; color: var(--primary-blue); font-size: 13px; font-weight: 800; cursor: pointer; margin-top: 6px; text-align: center; box-sizing: border-box; }
+        .reset-btn { width: 100%; padding: 12px; background: var(--danger-red); border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; margin-top: 6px; text-align: center; box-sizing: border-box; }
+        .history-btn, .completed-btn { width: 100%; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; margin-top: 6px; text-align: center; border: 1px solid var(--glass-border); display: block; box-sizing: border-box; }
+        .history-btn { background: var(--glass-bg); color: #fff; }
+        .completed-btn { background: rgba(76, 217, 100, 0.15); border-color: var(--success-green); color: var(--success-green); }
+
+        .alarm-box {
+            background: rgba(0, 210, 255, 0.05); border: 1px dashed var(--neon-blue);
+            border-radius: 15px; padding: 12px; margin-top: 15px; text-align: center;
+        }
+        .alarm-input {
+            background: transparent; border: none; color: var(--secondary-blue);
+            font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; text-align: center;
+            outline: none;
+        }
+
+        .creator-footer {
+            position: fixed; bottom: 10px; left: 0; width: 100%; text-align: center;
+            font-size: 7.5px; color: rgba(255, 255, 255, 0.2); letter-spacing: 0.5px;
+            pointer-events: none; z-index: 9999; font-weight: 300;
+        }
+
+        .success-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 5000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 40px; box-sizing: border-box;
+        }
+        .success-content { background: var(--glass-bg); border: 2px solid var(--gold); border-radius: 30px; padding: 40px 20px; }
+        .success-title { font-size: 32px; font-weight: 900; color: var(--gold); margin-bottom: 20px; }
+        .success-msg { font-size: 18px; color: #fff; margin-bottom: 30px; }
+        .new-target-btn { background: var(--gold); color: #000; padding: 18px 30px; border-radius: 15px; font-weight: 800; cursor: pointer; border: none; }
+
+        .history-modal {
+            position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -40%) scale(0.9);
+            width: 90%; max-width: 400px; height: 75vh; background: rgba(22, 22, 37, 0.98);
+            border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000;
+            display: none; flex-direction: column; padding: 25px; box-sizing: border-box;
+            opacity: 0; transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .history-modal.active { display: flex; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        #history-content { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+        .footer-sticky-btn { padding-top: 10px; border-top: 1px solid var(--glass-border); }
+
+        #custom-alert, #success-alert { 
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
+            color: white; padding: 12px 25px; border-radius: 25px; z-index: 9999; 
+            font-size: 14px; font-weight: 700; display: none; white-space: nowrap;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+            animation: slideDown 0.3s ease-out;
+        }
+        #custom-alert { background: linear-gradient(to right, #ff3b30, #ff2d55); }
+        #success-alert { background: linear-gradient(to right, #4cd964, #28cd41); }
+
+        @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+        .completed-item { cursor: pointer; flex-direction: column !important; }
+        .goal-detail { display: none; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; color: var(--gold); }
+        .clear-completed { background: var(--danger-red); color: white; padding: 14px; border-radius: 12px; text-align: center; font-weight: 800; cursor: pointer; font-size: 13px; }
+        
+        .info-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+        .info-dot { min-width: 6px; height: 6px; background: var(--secondary-blue); border-radius: 50%; margin-top: 6px; }
+
+    </style>
+</head>
+<body id="app-body">
+
+    <audio id="audio-slot" src="https://assets.mixkit.co/active_storage/sfx/2021/2021-preview.mp3" preload="auto" loop></audio>
+    <audio id="audio-trink" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+
+    <div id="custom-alert"></div>
+    <div id="success-alert"></div>
+
+    <div class="success-overlay" id="success-panel">
+        <div class="success-content">
+            <div class="success-title">TEBRİKLER!</div>
+            <div class="success-msg" id="final-message"></div>
+            <button class="new-target-btn" id="new-goal-trigger">HEDEFİ SIFIRLA</button>
+        </div>
+    </div>
+
+    <div class="history-modal" id="history-modal">
+        <div class="history-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
+            <span id="modal-title" style="font-weight: 800; color: var(--neon-blue); font-size: 20px;">Geçmiş</span>
+            <i id="close-history" class="fa-solid fa-circle-xmark" style="font-size: 28px; color: var(--danger-red); cursor: pointer;"></i>
+        </div>
+        <div id="history-content"></div>
+        <div id="modal-footer" class="footer-sticky-btn"></div>
+    </div>
+
+    <div class="app-container" id="main-app">
+        <div class="drawer-overlay" id="overlay"></div>
+
+        <div class="drawer" id="drawer">
+            <div class="drawer-inner">
+                <div class="drawer-header">HEDEF AYARLARI</div>
+                <div class="input-group">
+                    <div style="display: flex; gap: 8px;">
+                        <div style="flex: 1;"><span class="input-label">Adınız</span><input type="text" id="user-name" class="styled-input" placeholder="İsim"></div>
+                        <div style="flex: 1;"><span class="input-label">Hedefin</span><input type="text" id="target-name" class="styled-input" placeholder="Örn: Araba"></div>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <span class="input-label">Para Birimi</span>
+                    <div class="currency-row">
+                        <div class="curr-btn active" id="btn-tl">₺</div>
+                        <div class="curr-btn" id="btn-usd">$</div>
+                        <div class="curr-btn" id="btn-eur">€</div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <span class="input-label">Hedef Tutar</span>
+                    <input type="number" id="target-amount" class="styled-input" placeholder="0">
+                </div>
+                
+                <div class="input-group">
+                    <span class="input-label">Aralık (Min - Max)</span>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="min-rand" class="styled-input" placeholder="Min">
+                        <input type="number" id="max-rand" class="styled-input" placeholder="Max">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <span class="input-label">Yatırım Katı Modu</span>
+                    <div style="display: flex; gap: 6px; margin-top: 6px;">
+                        <div class="mult-btn" id="mult-100" style="flex:1; padding:10px; background:var(--input-bg); border:1px solid var(--glass-border); border-radius:10px; text-align:center; font-size:11px; cursor:pointer;">100 ve Katları</div>
+                        <div class="mult-btn" id="mult-random" style="flex:1; padding:10px; background:var(--input-bg); border:1px solid var(--glass-border); border-radius:10px; text-align:center; font-size:11px; cursor:pointer;">Serbest Mod</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <span class="input-label">Hatırlatıcı Kur</span>
+                    <div class="alarm-box">
+                        <i class="fa-solid fa-bell" style="color: var(--neon-blue); margin-bottom: 5px;"></i>
+                        <input type="datetime-local" id="alarm-time" class="alarm-input">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <span class="input-label">Yatırım Periyodu</span>
+                    <div class="period-row">
+                        <div class="period-btn active" id="period-daily">Günlük</div>
+                        <div class="period-btn" id="period-weekly">Haftalık</div>
+                        <div class="period-btn" id="period-monthly">Aylık</div>
+                    </div>
+                </div>
+
+                <button class="save-btn" id="save-settings-btn">AYARLARI KAYDET</button>
+                <div class="completed-btn" id="completed-btn-real" onclick="toggleMenu(); toggleHistory('completed');">TAMAMLANAN HEDEFLER</div>
+                <button class="notification-btn" id="notification-permission-btn">BİLDİRİM İZİNLERİ</button>
+                
+                <div class="reset-btn" id="full-reset-btn">HEDEFİ SIFIRLA</div>
+                <div class="history-btn" id="view-history-btn">GEÇMİŞİ GÖR</div>
+            </div>
+        </div>
+
+        <header>
+            <i class="fa-solid fa-bars menu-icon" id="menu-trigger"></i>
+            <i class="fa-solid fa-circle-info info-icon" id="info-trigger"></i>
+        </header>
+
+        <div class="circle-container">
+            <div class="outer-ring"></div>
+            <div class="inner-circle">
+                <div class="water-wrapper" id="water-wrapper"><div class="water"></div></div>
+                <div class="percentage" id="percentage-text">%0</div>
+            </div>
+        </div>
+
+        <div class="target-remaining-box" id="target-remaining-text"></div>
+        <div class="motivation-text" id="motivation-text">hedefini belirle ve yatırıma başla</div>
+
+        <div class="lucky-box" id="lucky-trigger">
+            <div class="lucky-title" id="lucky-main-text">Şanslı Rakamını Belirle</div>
+            <div class="lucky-result" id="lucky-val"><span id="slot-num">000</span></div>
+        </div>
+
+        <div class="action-container" id="roll-actions">
+            <div class="action-btn confirm" id="confirm-deposit-btn">Kumbaraya Attım</div>
+            <div class="action-btn new-roll" id="new-roll-trigger">Yeni Miktar</div>
+        </div>
+
+        <div class="rights-box" id="rights-box">
+            Kalan Hak: <b id="remaining-rights">3</b> | Yenilenme: <span id="countdown-timer">00g/00s/00d/00sn</span>
+        </div>
+        <div id="dynamic-motivation"></div>
+
+        <div class="creator-footer">
+            Uygulama yaratıcısı Seyhan yıldırım tüm tasarım ve hakları gizli ve elinde tutar
+        </div>
+    </div>
+
+    <script>
+        let currentBalance = 0, targetAmount = 0, activeCurrency = '₺', minR = 0, maxR = 0, isRolling = false, lastRoll = 0, weeklyRights = 3;
+        let depositHistory = [], completedGoals = [], targetDate = null, multiplierType = null, investmentPeriod = 'daily'; 
+        let motivationTimer = null;
+        let touchStartX = 0, touchEndX = 0;
+
+        const motivasyonlar = [
+            "Bugün harika bir gün, birikime devam!",
+            "Küçük adımlar büyük hedeflere götürür.",
+            "Hayalin için bir adım daha attın!",
+            "Disiplin başarının anahtarıdır.",
+            "Kumbara doluyor, hedefine yaklaşıyorsun!",
+            "Pes etme, o hedef senin olacak!",
+            "Gelecekteki kendine harika bir hediye veriyorsun.",
+            "Her kuruş seni özgürlüğüne yaklaştırır.",
+            "Sabır ve istikrar en büyük kazançtır.",
+            "Yatırımın en iyisi kendine olandır!"
+        ];
+
+        const dom = {
+            body: document.getElementById('app-body'),
+            water: document.getElementById('water-wrapper'),
+            percText: document.getElementById('percentage-text'),
+            motiv: document.getElementById('motivation-text'),
+            remainingText: document.getElementById('target-remaining-text'),
+            luckyVal: document.getElementById('lucky-val'),
+            slotNum: document.getElementById('slot-num'),
+            luckyMain: document.getElementById('lucky-main-text'),
+            actions: document.getElementById('roll-actions'),
+            drawer: document.getElementById('drawer'),
+            overlay: document.getElementById('overlay'),
+            mainApp: document.getElementById('main-app'),
+            rights: document.getElementById('remaining-rights'),
+            timerDisplay: document.getElementById('countdown-timer'),
+            dynMotiv: document.getElementById('dynamic-motivation'),
+            newRollBtn: document.getElementById('new-roll-trigger'),
+            alarmInput: document.getElementById('alarm-time'),
+            notifBtn: document.getElementById('notification-permission-btn'),
+            successPanel: document.getElementById('success-panel'),
+            finalMessage: document.getElementById('final-message')
+        };
+
+        window.onload = function() {
+            const savedData = localStorage.getItem('super1_v2_data');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                currentBalance = data.balance || 0;
+                targetAmount = data.target || 0;
+                activeCurrency = data.currency || '₺';
+                minR = data.min || 0;
+                maxR = data.max || 0;
+                weeklyRights = data.rights !== undefined ? data.rights : 3;
+                targetDate = data.targetDate || (Date.now() + 21 * 24 * 60 * 60 * 1000);
+                depositHistory = data.history || [];
+                completedGoals = data.completedGoals || [];
+                multiplierType = data.multiplierType || null;
+                investmentPeriod = data.period || 'daily';
+                dom.alarmInput.value = data.alarmTime || "";
+                document.getElementById('user-name').value = data.userName || "";
+                document.getElementById('target-name').value = data.targetName || "";
+                document.getElementById('target-amount').value = targetAmount > 0 ? targetAmount : "";
+                document.getElementById('min-rand').value = minR > 0 ? minR : "";
+                document.getElementById('max-rand').value = maxR > 0 ? maxR : "";
+                updateUI();
+                updateRightsUI();
+                if(multiplierType) setMultiplier(multiplierType, false);
+                setPeriod(investmentPeriod, false);
+            } else {
+                targetDate = Date.now() + 21 * 24 * 60 * 60 * 1000;
+                saveToLocalStorage();
+            }
+            startCountdown();
+            initSwipe();
+            initAlarmChecker();
+        };
+
+        function saveToLocalStorage() {
+            const dataToSave = {
+                balance: currentBalance, target: targetAmount, currency: activeCurrency,
+                min: minR, max: maxR, rights: weeklyRights, targetDate: targetDate,
+                history: depositHistory, completedGoals: completedGoals,
+                userName: document.getElementById('user-name').value,
+                targetName: document.getElementById('target-name').value,
+                multiplierType: multiplierType,
+                period: investmentPeriod,
+                alarmTime: dom.alarmInput.value
+            };
+            localStorage.setItem('super1_v2_data', JSON.stringify(dataToSave));
+        }
+
+        function initSwipe() {
+            document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+            document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
+        }
+        function handleSwipe() {
+            if (touchEndX - touchStartX > 70 && touchStartX < window.innerWidth * 0.3) {
+                if(!dom.drawer.classList.contains('active')) toggleMenu();
+            }
+        }
+
+        // BİLDİRİM İZİNLERİ DÜZELTİLDİ
+        dom.notifBtn.onclick = async () => {
+            if (!("Notification" in window)) { 
+                showAlert("Tarayıcınız bildirimi desteklemiyor."); 
+                return; 
+            }
+            
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    showSuccess("Bildirim izinleri verildi!");
+                    // İzin verildi bildirimi gönder
+                    new Notification("GUMBARAM", {
+                        body: "Bildirim izinleri başarıyla aktif edildi!",
+                        icon: "https://i.hizliresim.com/3wlhjf8.jpeg"
+                    });
+                } else {
+                    showAlert("Bildirim izni reddedildi.");
+                }
+            } catch (err) {
+                showAlert("İzin istenirken hata oluştu.");
+            }
+        };
+
+        function initAlarmChecker() {
+            setInterval(() => {
+                const alarmVal = dom.alarmInput.value;
+                if (!alarmVal) return;
+                const now = new Date(), alarmDate = new Date(alarmVal);
+                if (Math.abs(now - alarmDate) < 30000) {
+                    sendInvestmentNotification();
+                    dom.alarmInput.value = ""; saveToLocalStorage();
+                }
+            }, 30000);
+        }
+
+        function sendInvestmentNotification() {
+            const isim = document.getElementById('user-name').value || "Şampiyon";
+            if (Notification.permission === "granted") {
+                new Notification("ZAMAN GELDİ " + isim.toUpperCase(), { 
+                    body: "UNUTMADAN YATIRIMINI YAP", 
+                    icon: "https://i.hizliresim.com/3wlhjf8.jpeg" 
+                });
+            } else { 
+                showAlert("ZAMAN GELDİ! Yatırımını Unutma."); 
+            }
+        }
+
+        function toggleMenu() {
+            const active = dom.drawer.classList.toggle('active');
+            dom.overlay.style.display = active ? 'block' : 'none';
+            if(active) dom.body.classList.add('modal-open');
+            else dom.body.classList.remove('modal-open');
+        }
+
+        function setCurrency(c, id) { 
+            activeCurrency = c; 
+            document.querySelectorAll('.curr-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            saveToLocalStorage(); 
+        }
+
+        function setMultiplier(type, notify) {
+            multiplierType = type;
+            document.querySelectorAll('.mult-btn').forEach(b => { b.style.backgroundColor = 'var(--input-bg)'; b.style.color = 'white'; });
+            const targetBtn = type === '100' ? document.getElementById('mult-100') : document.getElementById('mult-random');
+            targetBtn.style.backgroundColor = 'var(--success-green)';
+            targetBtn.style.color = 'black';
+            if(notify) showSuccess(type === '100' ? "100 ve Katları Aktif!" : "Serbest Mod Aktif!");
+            saveToLocalStorage();
+        }
+
+        function setPeriod(p, notify) {
+            investmentPeriod = p;
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('period-' + p).classList.add('active');
+            if(notify) showSuccess("Yatırım periyodu güncellendi!");
+            saveToLocalStorage();
+        }
+
+        function saveSettings() {
+            targetAmount = parseFloat(document.getElementById('target-amount').value) || 0;
+            minR = parseFloat(document.getElementById('min-rand').value) || 0;
+            maxR = parseFloat(document.getElementById('max-rand').value) || 0;
+            saveToLocalStorage();
+            updateUI(); 
+            const trink = document.getElementById('audio-trink');
+            trink.currentTime = 0; trink.play().catch(()=>{});
+            showSuccess("Ayarlar Kaydedildi!");
+            dom.motiv.innerText = "yatırım ayarları kaydedildi";
+            closeAllPanels();
+        }
+
+        function rollDice() {
+            if(!multiplierType) { showAlert("Lütfen sayı katı belirleyin!"); toggleMenu(); return; }
+            if(targetAmount <= 0) { showAlert("Lütfen hedef belirleyin!"); return; }
+            if(minR <= 0 || maxR <= 0) { showAlert("Lütfen Min-Max belirleyin!"); return; }
+            if(isRolling) return;
+            isRolling = true; dom.motiv.innerText = "";
+            const slotSfx = document.getElementById('audio-slot');
+            slotSfx.currentTime = 0; slotSfx.play().catch(()=>{});
+            dom.luckyVal.style.display = "flex"; 
+            let titleText = "Bugünkü şanslı rakamın:";
+            if(investmentPeriod === 'weekly') titleText = "Bu haftaki şanslı rakamın:";
+            if(investmentPeriod === 'monthly') titleText = "Bu ayki şanslı rakamın:";
+            dom.luckyMain.innerText = "Şansın Dönüyor..."; 
+            const slotIv = setInterval(() => { dom.slotNum.innerText = Math.floor(Math.random() * 8999 + 1000); }, 50);
+            setTimeout(() => {
+                clearInterval(slotIv); slotSfx.pause();
+                const rawRoll = Math.random() * (maxR - minR) + minR;
+                lastRoll = (multiplierType === '100') ? Math.round(rawRoll / 100) * 100 : Math.round(rawRoll);
+                dom.slotNum.innerText = lastRoll + " " + activeCurrency;
+                dom.luckyMain.innerText = titleText;
+                dom.actions.style.display = "flex";
+                document.getElementById('rights-box').classList.add('active');
+                updateRightsUI();
+            }, 1500);
+        }
+
+        function confirmDeposit() {
+            currentBalance += lastRoll;
+            const now = new Date();
+            depositHistory.push({ amount: lastRoll, currency: activeCurrency, time: now.toLocaleDateString('tr-TR') });
+            saveToLocalStorage();
+            updateUI();
+            const trink = document.getElementById('audio-trink');
+            trink.currentTime = 0; trink.play().catch(()=>{});
+            patlatPremiumConfetti();
+            resetUI();
+            updateRandomMotivation(); 
+            checkGoalCompletion();
+        }
+
+        function updateUI() {
+            let p = targetAmount > 0 ? Math.floor((currentBalance / targetAmount) * 100) : 0;
+            if(p > 100) p = 100;
+            dom.water.style.height = p + "%";
+            dom.percText.innerText = "%" + p;
+            if(targetAmount > 0) {
+                dom.remainingText.innerText = `Hedefe kalan %${100-p}`;
+                if(p >= 100) dom.motiv.innerText = "Hedef Tamamlandı!";
+            } else {
+                dom.remainingText.innerText = "";
+                dom.motiv.innerText = "hedefini belirle ve yatırıma başla";
+            }
+        }
+
+        function updateRightsUI() { 
+            dom.rights.innerText = weeklyRights;
+            if(weeklyRights <= 0) { dom.newRollBtn.classList.add('no-rights'); dom.newRollBtn.innerText = "Hakkın Bitti"; } 
+            else { dom.newRollBtn.classList.remove('no-rights'); dom.newRollBtn.innerText = "Yeni Miktar"; }
+        }
+
+        function newAmount() { 
+            const isim = document.getElementById('user-name').value || "Şampiyon";
+            if(weeklyRights > 0) { 
+                weeklyRights--; saveToLocalStorage(); updateRightsUI(); resetUI(); rollDice();
+                dom.dynMotiv.style.opacity = 1; dom.dynMotiv.style.color = "var(--danger-red)";
+                if(weeklyRights === 2) dom.dynMotiv.innerText = `heey 2 hakkın kaldı bence dikkatli kullan ${isim}`;
+                else if(weeklyRights === 1) dom.dynMotiv.innerText = `hakkın 1 kaldı ${isim} bence iyi düşün`;
+                else if(weeklyRights === 0) dom.dynMotiv.innerText = `hakların bitti yenilenmesini bekle ${isim}`;
+            } else { showAlert(`Hakkın kalmadı ${isim}!`); } 
+        }
+
+        function resetUI() { dom.luckyVal.style.display = "none"; dom.luckyMain.innerText = "Şanslı Rakamını Belirle"; dom.actions.style.display = "none"; isRolling = false; }
+
+        function toggleHistory(type) {
+            const modal = document.getElementById('history-modal'), title = document.getElementById('modal-title'), content = document.getElementById('history-content'), footer = document.getElementById('modal-footer');
+            content.innerHTML = ""; footer.innerHTML = "";
+            if (type === 'deposit') {
+                title.innerHTML = `İşlem Geçmişi`;
+                depositHistory.slice().reverse().forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background:rgba(255,255,255,0.04); margin-bottom:12px; padding:15px; border-radius:15px; border-left:4px solid var(--primary-blue); display:flex; justify-content:space-between;";
+                    div.innerHTML = `<b>+${item.amount} ${item.currency}</b> <span style="font-size:12px; color:#888;">${item.time}</span>`;
+                    content.appendChild(div);
+                });
+            } else {
+                title.innerHTML = `Tamamlanan Hedefler`;
+                completedGoals.slice().reverse().forEach((item) => {
+                    const container = document.createElement('div'); container.className = "completed-item";
+                    container.style.cssText = "background:rgba(76,217,100,0.1); margin-bottom:12px; padding:15px; border-radius:15px; border-left:4px solid var(--success-green); display:flex;";
+                    const topRow = document.createElement('div'); topRow.style.cssText = "display:flex; justify-content:space-between; width:100%;";
+                    topRow.innerHTML = `<b>${item.name}</b> <span style="font-size:12px; color:#888;">${item.date}</span>`;
+                    const detail = document.createElement('div'); detail.className = "goal-detail";
+                    detail.innerHTML = `Hedef Tutarı: ${item.amount} ${item.currency}`;
+                    container.appendChild(topRow); container.appendChild(detail);
+                    container.onclick = () => { detail.style.display = detail.style.display === 'block' ? 'none' : 'block'; };
+                    content.appendChild(container);
+                });
+                if(completedGoals.length > 0) {
+                    const clearBtn = document.createElement('div'); clearBtn.className = "clear-completed"; clearBtn.innerText = "TAMAMLANAN HEDEFLERİ TEMİZLE";
+                    clearBtn.onclick = () => { if(confirm("Tüm tamamlanan hedefler silinecek. Emin misin?")) { completedGoals = []; saveToLocalStorage(); toggleHistory('completed'); } };
+                    footer.appendChild(clearBtn);
+                }
+            }
+            dom.body.classList.add('modal-open'); modal.style.display = 'flex';
+            setTimeout(() => { modal.classList.add('active'); dom.mainApp.classList.add('blur-active'); dom.overlay.style.display = 'block'; }, 10);
+        }
+
+        function startCountdown() {
+            setInterval(() => {
+                const now = Date.now(); let diff = targetDate - now;
+                if (diff <= 0) { weeklyRights = 3; targetDate = Date.now() + 21 * 24 * 60 * 60 * 1000; saveToLocalStorage(); updateRightsUI(); }
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24)), hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)), mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)), secs = Math.floor((diff % (1000 * 60)) / 1000);
+                dom.timerDisplay.innerText = `${days}g/${hours}s/${mins}d/${secs}sn`;
+            }, 1000);
+        }
+
+        function checkGoalCompletion() {
+            let p = targetAmount > 0 ? (currentBalance / targetAmount) * 100 : 0;
+            if (p >= 100) {
+                const targetName = document.getElementById('target-name').value || "Hayal";
+                const userName = document.getElementById('user-name').value || "Şampiyon";
+                completedGoals.push({ name: targetName, date: new Date().toLocaleDateString('tr-TR'), amount: targetAmount, currency: activeCurrency });
+                saveToLocalStorage();
+                dom.finalMessage.innerText = `Hedef Tamamlandı! \n\n Harikasın ${userName}! Kumbaranı patlat ve ${targetName} al!`;
+                setTimeout(() => { dom.successPanel.style.display = 'flex'; }, 800);
+            }
+        }
+
+        function startNewGoal() {
+            currentBalance = 0; targetAmount = 0; minR = 0; maxR = 0;
+            depositHistory = []; weeklyRights = 3; multiplierType = null;
+            investmentPeriod = 'daily'; targetDate = Date.now() + 21 * 24 * 60 * 60 * 1000; 
+            document.getElementById('target-amount').value = ""; document.getElementById('target-name').value = "";
+            document.getElementById('min-rand').value = ""; document.getElementById('max-rand').value = "";
+            document.querySelectorAll('.mult-btn').forEach(b => { b.style.backgroundColor = 'var(--input-bg)'; b.style.color = 'white'; });
+            setPeriod('daily', false); saveToLocalStorage(); updateUI(); updateRightsUI();
+            dom.successPanel.style.display = 'none';
+            setTimeout(toggleMenu, 500);
+        }
+
+        // HEDEFİ SIFIRLA BİLDİRİMİ EKLENDİ
+        function resetForNewGoal() { 
+            if(confirm("Hedef sıfırlanacak ve tüm ayarlar temizlenecek. Emin misin?")) { 
+                startNewGoal(); 
+                showAlert("HEDEF SIFIRLANDI"); // Kırmızı bildirim
+                setTimeout(() => { location.reload(); }, 1500);
+            } 
+        }
+
+        function closeHistoryModal() { const modal = document.getElementById('history-modal'); modal.classList.remove('active'); dom.mainApp.classList.remove('blur-active'); dom.body.classList.remove('modal-open'); dom.overlay.style.display = "none"; setTimeout(() => { modal.style.display = "none"; }, 250); }
+        function closeAllPanels() { closeHistoryModal(); dom.drawer.classList.remove('active'); }
+        function showAlert(msg) { const a = document.getElementById('custom-alert'); a.innerText = msg; a.style.display = 'block'; setTimeout(() => { a.style.display = 'none'; }, 3000); }
+        function showSuccess(msg) { const a = document.getElementById('success-alert'); a.innerText = msg; a.style.display = 'block'; setTimeout(() => { a.style.display = 'none'; }, 3000); }
+        function updateRandomMotivation() { clearTimeout(motivationTimer); const randomMsg = motivasyonlar[Math.floor(Math.random() * motivasyonlar.length)]; dom.dynMotiv.innerText = randomMsg; dom.dynMotiv.style.color = "var(--gold)"; dom.dynMotiv.style.opacity = 1; motivationTimer = setTimeout(() => { dom.dynMotiv.style.opacity = 0; }, 10000); }
+
+        document.getElementById('menu-trigger').onclick = toggleMenu;
+        document.getElementById('info-trigger').onclick = showInfoPanel;
+        document.getElementById('overlay').onclick = closeAllPanels;
+        document.getElementById('close-history').onclick = closeHistoryModal;
+        document.getElementById('btn-tl').onclick = () => setCurrency('₺', 'btn-tl');
+        document.getElementById('btn-usd').onclick = () => setCurrency('$', 'btn-usd');
+        document.getElementById('btn-eur').onclick = () => setCurrency('€', 'btn-eur');
+        document.getElementById('save-settings-btn').onclick = saveSettings;
+        document.getElementById('full-reset-btn').onclick = resetForNewGoal; 
+        document.getElementById('view-history-btn').onclick = () => { toggleMenu(); toggleHistory('deposit'); };
+        document.getElementById('lucky-trigger').onclick = rollDice;
+        document.getElementById('confirm-deposit-btn').onclick = confirmDeposit;
+        document.getElementById('new-roll-trigger').onclick = newAmount;
+        document.getElementById('new-goal-trigger').onclick = startNewGoal;
+        document.getElementById('mult-100').onclick = () => setMultiplier('100', true);
+        document.getElementById('mult-random').onclick = () => setMultiplier('random', true);
+        document.getElementById('period-daily').onclick = () => setPeriod('daily', true);
+        document.getElementById('period-weekly').onclick = () => setPeriod('weekly', true);
+        document.getElementById('period-monthly').onclick = () => setPeriod('monthly', true);
+
+        function showInfoPanel() {
+            const modal = document.getElementById('history-modal'), title = document.getElementById('modal-title'), content = document.getElementById('history-content'), footer = document.getElementById('modal-footer');
+            title.innerHTML = "Uygulama Bilgisi"; footer.innerHTML = "";
+            content.innerHTML = `
+                <div style="padding:10px; line-height:1.6; color:#ddd;">
+                    <b style="color:var(--secondary-blue); font-size:15px;">Uygulama Amacı Nedir?</b><br>
+                    <p style="font-size:13px; margin-bottom:15px;">Bu uygulama, kullanıcıların belirledikleri hedeflere (örneğin: yeni bir telefon, tatil veya birikim) eğlenceli ve disiplinli bir şekilde ulaşmalarını sağlayan dijital bir kumbaradır. Şans faktörü ve oyunlaştırma ile birikim yapma sürecini daha motivasyonel hale getirir.</p>
+                    
+                    <b style="color:var(--secondary-blue); font-size:15px;">Nasıl Kullanılır?</b><br>
+                    <div style="font-size:13px; margin-top:5px;">
+                        <div class="info-item"><div class="info-dot"></div><span>Hedef Ayarları Menüsünden hedefinizi ve hedeflediğiniz tutarı belirleyin.</span></div>
+                        <div class="info-item"><div class="info-dot"></div><span>Birikim yapmak istediğiniz para birimini ve yatırım aralığını (Min-Max) seçin.</span></div>
+                        <div class="info-item"><div class="info-dot"></div><span>"Şanslı Rakamını Belirle" kutusuna tıklayarak o günkü yatırım miktarınızı sistemin seçmesine izin verin.</span></div>
+                        <div class="info-item"><div class="info-dot"></div><span>Belirlenen tutarı kumbaranıza eklemek için "Kumbaraya Attım" butonuna basın.</span></div>
+                        <div class="info-item"><div class="info-dot"></div><span>Eğer çıkan miktarı beğenmezseniz, sınırlı sayıdaki "Yeni Miktar" hakkınızı kullanabilirsiniz.</span></div>
+                        <div class="info-item"><div class="info-dot"></div><span>Hatırlatıcı kurarak yatırım periyodunuzu takip edebilirsiniz.</span></div>
+                        <div class="info-item"><div class="info-dot"></div><span>Kumbaranız %100 dolduğunda hedefinize ulaşmış olursunuz!</span></div>
+                    </div>
+                </div>
+            `;
+            dom.body.classList.add('modal-open'); modal.style.display = 'flex';
+            setTimeout(() => { modal.classList.add('active'); dom.mainApp.classList.add('blur-active'); dom.overlay.style.display = 'block'; }, 10);
+        }
+
+        function patlatPremiumConfetti() {
+            const colors = ['#0095f6', '#00f2fe', '#fff', '#ffd700', '#ff00ff'];
+            for (let i = 0; i < 30; i++) {
+                const c = document.createElement('div'); c.style.position = "fixed"; c.style.width = "8px"; c.style.height = "8px"; c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; c.style.zIndex = "5000";
+                const startX = window.innerWidth / 2, startY = window.innerHeight * 0.8; c.style.left = startX + 'px'; c.style.top = startY + 'px'; dom.body.appendChild(c);
+                const angle = (Math.random() * 180 - 180) * (Math.PI / 180), velocity = Math.random() * 15 + 10;
+                let x = startX, y = startY, vx = Math.cos(angle) * velocity, vy = Math.sin(angle) * velocity, timer = 0;
+                const move = setInterval(() => { x += vx; y += vy; vy += 0.5; c.style.transform = `translate(${x - startX}px, ${y - startY}px) rotate(${timer * 15}deg)`; if(++timer > 40) { clearInterval(move); c.remove(); } }, 20);
+            }
+        }
+    </script>
+</body>
+</html>
