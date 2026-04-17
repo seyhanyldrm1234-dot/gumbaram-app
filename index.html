@@ -398,6 +398,10 @@
             finalMessage: document.getElementById('final-message')
         };
 
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
         window.onload = function() {
             const savedData = localStorage.getItem('super1_v2_data');
             if (savedData) {
@@ -429,7 +433,6 @@
             }
             startCountdown();
             initSwipe();
-            initAlarmChecker();
         };
 
         function saveToLocalStorage() {
@@ -456,53 +459,21 @@
             }
         }
 
-        // BİLDİRİM İZİNLERİ DÜZELTİLDİ
         dom.notifBtn.onclick = async () => {
-            if (!("Notification" in window)) { 
-                showAlert("Tarayıcınız bildirimi desteklemiyor."); 
-                return; 
-            }
-            
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                    showSuccess("Bildirim izinleri verildi!");
-                    // İzin verildi bildirimi gönder
-                    new Notification("GUMBARAM", {
-                        body: "Bildirim izinleri başarıyla aktif edildi!",
-                        icon: "https://i.hizliresim.com/3wlhjf8.jpeg"
-                    });
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                showSuccess("İşlem Tamam! Şimdi uygulamayı kapatın ve 15 saniye bekleyin.");
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION' });
                 } else {
-                    showAlert("Bildirim izni reddedildi.");
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.active.postMessage({ type: 'SCHEDULE_NOTIFICATION' });
+                    });
                 }
-            } catch (err) {
-                showAlert("İzin istenirken hata oluştu.");
+            } else {
+                showAlert("Bildirim izni reddedildi.");
             }
         };
-
-        function initAlarmChecker() {
-            setInterval(() => {
-                const alarmVal = dom.alarmInput.value;
-                if (!alarmVal) return;
-                const now = new Date(), alarmDate = new Date(alarmVal);
-                if (Math.abs(now - alarmDate) < 30000) {
-                    sendInvestmentNotification();
-                    dom.alarmInput.value = ""; saveToLocalStorage();
-                }
-            }, 30000);
-        }
-
-        function sendInvestmentNotification() {
-            const isim = document.getElementById('user-name').value || "Şampiyon";
-            if (Notification.permission === "granted") {
-                new Notification("ZAMAN GELDİ " + isim.toUpperCase(), { 
-                    body: "UNUTMADAN YATIRIMINI YAP", 
-                    icon: "https://i.hizliresim.com/3wlhjf8.jpeg" 
-                });
-            } else { 
-                showAlert("ZAMAN GELDİ! Yatırımını Unutma."); 
-            }
-        }
 
         function toggleMenu() {
             const active = dom.drawer.classList.toggle('active');
@@ -689,11 +660,10 @@
             setTimeout(toggleMenu, 500);
         }
 
-        // HEDEFİ SIFIRLA BİLDİRİMİ EKLENDİ
         function resetForNewGoal() { 
             if(confirm("Hedef sıfırlanacak ve tüm ayarlar temizlenecek. Emin misin?")) { 
                 startNewGoal(); 
-                showAlert("HEDEF SIFIRLANDI"); // Kırmızı bildirim
+                showAlert("HEDEF SIFIRLANDI");
                 setTimeout(() => { location.reload(); }, 1500);
             } 
         }
@@ -730,18 +700,7 @@
             content.innerHTML = `
                 <div style="padding:10px; line-height:1.6; color:#ddd;">
                     <b style="color:var(--secondary-blue); font-size:15px;">Uygulama Amacı Nedir?</b><br>
-                    <p style="font-size:13px; margin-bottom:15px;">Bu uygulama, kullanıcıların belirledikleri hedeflere (örneğin: yeni bir telefon, tatil veya birikim) eğlenceli ve disiplinli bir şekilde ulaşmalarını sağlayan dijital bir kumbaradır. Şans faktörü ve oyunlaştırma ile birikim yapma sürecini daha motivasyonel hale getirir.</p>
-                    
-                    <b style="color:var(--secondary-blue); font-size:15px;">Nasıl Kullanılır?</b><br>
-                    <div style="font-size:13px; margin-top:5px;">
-                        <div class="info-item"><div class="info-dot"></div><span>Hedef Ayarları Menüsünden hedefinizi ve hedeflediğiniz tutarı belirleyin.</span></div>
-                        <div class="info-item"><div class="info-dot"></div><span>Birikim yapmak istediğiniz para birimini ve yatırım aralığını (Min-Max) seçin.</span></div>
-                        <div class="info-item"><div class="info-dot"></div><span>"Şanslı Rakamını Belirle" kutusuna tıklayarak o günkü yatırım miktarınızı sistemin seçmesine izin verin.</span></div>
-                        <div class="info-item"><div class="info-dot"></div><span>Belirlenen tutarı kumbaranıza eklemek için "Kumbaraya Attım" butonuna basın.</span></div>
-                        <div class="info-item"><div class="info-dot"></div><span>Eğer çıkan miktarı beğenmezseniz, sınırlı sayıdaki "Yeni Miktar" hakkınızı kullanabilirsiniz.</span></div>
-                        <div class="info-item"><div class="info-dot"></div><span>Hatırlatıcı kurarak yatırım periyodunuzu takip edebilirsiniz.</span></div>
-                        <div class="info-item"><div class="info-dot"></div><span>Kumbaranız %100 dolduğunda hedefinize ulaşmış olursunuz!</span></div>
-                    </div>
+                    <p style="font-size:13px; margin-bottom:15px;">Bu uygulama, kullanıcıların belirledikleri hedeflere eğlenceli ve disiplinli bir şekilde ulaşmalarını sağlayan dijital bir kumbaradır.</p>
                 </div>
             `;
             dom.body.classList.add('modal-open'); modal.style.display = 'flex';
